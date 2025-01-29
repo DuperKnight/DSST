@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "daxr",
+  "version": "${version}",
+  "name": "DAXR",
+  "description": "Duper's Auto Xray Rollback mod",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/daxr/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.duperknight.daxr.client.DaxrClient"
+    ],
+    "main": [
+      "com.duperknight.daxr.Daxr"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
