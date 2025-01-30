@@ -1,9 +1,10 @@
-package com.duperknight.daxr.client;
+package com.duperknight.dsst.client;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.CommandRegistryAccess;
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
-public class DaxrClient implements ClientModInitializer {
+public class DsstClient implements ClientModInitializer {
     private static final Pattern COREPROTECT_DONE = Pattern.compile(
             ".*Time taken: \\d+(\\.\\d+)? seconds\\..*",
             Pattern.CASE_INSENSITIVE
@@ -36,6 +37,7 @@ public class DaxrClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientCommandRegistrationCallback.EVENT.register(this::registerRollbackXrayCommand);
         ClientReceiveMessageEvents.GAME.register(this::handleMessage);
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> resetState());
     }
 
     private void registerRollbackXrayCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess commandRegistryAccess) {
@@ -44,7 +46,7 @@ public class DaxrClient implements ClientModInitializer {
                         .executes(context -> {
                             String player = StringArgumentType.getString(context, "player");
                             if (isBusy.get()) {
-                                context.getSource().sendError(Text.of("§cAnother rollback is in progress!"));
+                                context.getSource().sendError(Text.of("§b[DSST] §rAnother rollback is in progress!"));
                             } else {
                                 sendRollbackCommands(player);
                             }
@@ -56,20 +58,17 @@ public class DaxrClient implements ClientModInitializer {
 
     private void handleMessage(Text message, boolean overlay) {
         String rawMessage = message.getString().replaceAll("§[0-9a-fk-or]", "");
-        //System.out.println("DEBUG - Received: " + rawMessage);
 
         if (COREPROTECT_DONE.matcher(rawMessage).matches()) {
-            //System.out.println("DEBUG - Command completed successfully");
             scheduler.schedule(() ->
                             MinecraftClient.getInstance().execute(this::proceedToNextCommand),
                     1, TimeUnit.SECONDS
             );
         }
         else if (ERROR_PATTERN.matcher(rawMessage).find()) {
-            //System.out.println("DEBUG - Error detected, stopping sequence");
             MinecraftClient.getInstance().execute(() -> {
                 MinecraftClient.getInstance().player.sendMessage(
-                        Text.of("§cError occurred! Stopping rollback sequence."),
+                        Text.of("§b[DSST] §cError occurred! Stopping rollback sequence."),
                         false
                 );
                 resetState();
@@ -101,7 +100,7 @@ public class DaxrClient implements ClientModInitializer {
             String finishedPlayer = currentPlayer;
             resetState();
             MinecraftClient.getInstance().player.sendMessage(
-                    Text.of("§aFinished rollback for " + finishedPlayer),
+                    Text.of("§b[DSST] §rFinished rollback for " + finishedPlayer),
                     false
             );
         } else {
@@ -114,7 +113,7 @@ public class DaxrClient implements ClientModInitializer {
         if (client.player == null || currentCommandIndex >= pendingCommands.length) return;
 
         String command = pendingCommands[currentCommandIndex];
-        //System.out.println("DEBUG - Sending command #" + (currentCommandIndex + 1));
+        System.out.println("DEBUG - Sending command #" + (currentCommandIndex + 1));
         client.player.networkHandler.sendCommand(command);
     }
 
