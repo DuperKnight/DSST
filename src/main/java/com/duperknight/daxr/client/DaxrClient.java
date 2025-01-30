@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -17,12 +18,12 @@ import java.util.regex.Pattern;
 
 public class DaxrClient implements ClientModInitializer {
     private static final Pattern COREPROTECT_DONE = Pattern.compile(
-        ".*Time taken: \\d+(\\.\\d+)? seconds\\..*", 
-        Pattern.CASE_INSENSITIVE
+            ".*Time taken: \\d+(\\.\\d+)? seconds\\..*",
+            Pattern.CASE_INSENSITIVE
     );
-    private static final Pattern COREPROTECT_ERROR = Pattern.compile(
-        ".*Database busy.*", 
-        Pattern.CASE_INSENSITIVE
+    private static final Pattern ERROR_PATTERN = Pattern.compile(
+            "Unknown or incomplete command|Database busy",
+            Pattern.CASE_INSENSITIVE
     );
 
     private final AtomicBoolean isBusy = new AtomicBoolean(false);
@@ -33,26 +34,23 @@ public class DaxrClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> 
-            registerRollbackXrayCommand(dispatcher)
-        );
-
+        ClientCommandRegistrationCallback.EVENT.register(this::registerRollbackXrayCommand);
         ClientReceiveMessageEvents.GAME.register(this::handleMessage);
     }
 
-    private void registerRollbackXrayCommand(CommandDispatcher<FabricClientCommandSource> dispatcher) {
+    private void registerRollbackXrayCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess commandRegistryAccess) {
         dispatcher.register(ClientCommandManager.literal("rollbackxray")
-            .then(ClientCommandManager.argument("player", StringArgumentType.word())
-                .executes(context -> {
-                    String player = StringArgumentType.getString(context, "player");
-                    if (isBusy.get()) {
-                        context.getSource().sendError(Text.of("§cAnother rollback is in progress!"));
-                    } else {
-                        sendRollbackCommands(player);
-                    }
-                    return 1;
-                })
-            )
+                .then(ClientCommandManager.argument("player", StringArgumentType.word())
+                        .executes(context -> {
+                            String player = StringArgumentType.getString(context, "player");
+                            if (isBusy.get()) {
+                                context.getSource().sendError(Text.of("§cAnother rollback is in progress!"));
+                            } else {
+                                sendRollbackCommands(player);
+                            }
+                            return 1;
+                        })
+                )
         );
     }
 
@@ -62,21 +60,19 @@ public class DaxrClient implements ClientModInitializer {
 
         if (COREPROTECT_DONE.matcher(rawMessage).matches()) {
             //System.out.println("DEBUG - Command completed successfully");
-            scheduler.schedule(() -> 
-                MinecraftClient.getInstance().execute(this::proceedToNextCommand), 
-                1, TimeUnit.SECONDS
+            scheduler.schedule(() ->
+                            MinecraftClient.getInstance().execute(this::proceedToNextCommand),
+                    1, TimeUnit.SECONDS
             );
-        } else if (COREPROTECT_ERROR.matcher(rawMessage).matches()) {
-            //System.out.println("DEBUG - Database busy error detected");
+        }
+        else if (ERROR_PATTERN.matcher(rawMessage).find()) {
+            //System.out.println("DEBUG - Error detected, stopping sequence");
             MinecraftClient.getInstance().execute(() -> {
                 MinecraftClient.getInstance().player.sendMessage(
-                    Text.of("§cRetrying in 5 seconds..."), 
-                    false
+                        Text.of("§cError occurred! Stopping rollback sequence."),
+                        false
                 );
-                scheduler.schedule(() -> 
-                    MinecraftClient.getInstance().execute(this::retryCurrentCommand), 
-                    5, TimeUnit.SECONDS
-                );
+                resetState();
             });
         }
     }
@@ -86,9 +82,9 @@ public class DaxrClient implements ClientModInitializer {
         if (client.player == null) return;
 
         pendingCommands = new String[]{
-            "co rollback u:" + player + " t:7d r:#global action:container",
-            "co rollback u:" + player + " t:30d radius:#global a:-block include:deepslate,deepslate_gold_ore,deepslate_emerald_ore,deepslate_diamond_ore,deepslate_iron_ore,deepslate_lapis_ore,deepslate_redstone_ore,deepslate_copper_ore,tuff",
-            "co rollback u:" + player + " t:30d radius:#global a:-block include:stone,gold_ore,iron_ore,emerald_ore,diamond_ore,redstone_ore,lapis_ore,coal_ore,granite,diorite,andesite,gravel"
+                "co rollback u:" + player + " t:7d r:#global action:container",
+                "co rollback u:" + player + " t:30d radius:#global a:-block include:deepslate,deepslate_gold_ore,deepslate_emerald_ore,deepslate_diamond_ore,deepslate_iron_ore,deepslate_lapis_ore,deepslate_redstone_ore,deepslate_copper_ore,tuff",
+                "co rollback u:" + player + " t:30d radius:#global a:-block include:stone,gold_ore,iron_ore,emerald_ore,diamond_ore,redstone_ore,lapis_ore,coal_ore,granite,diorite,andesite,gravel"
         };
 
         currentCommandIndex = 0;
@@ -98,21 +94,17 @@ public class DaxrClient implements ClientModInitializer {
     }
 
     private void proceedToNextCommand() {
+        if (!isBusy.get()) return;
+
         currentCommandIndex++;
         if (currentCommandIndex >= pendingCommands.length) {
             String finishedPlayer = currentPlayer;
             resetState();
             MinecraftClient.getInstance().player.sendMessage(
-                Text.of("§aFinished rollback for " + finishedPlayer + "'s x-ray!"),
-                false
+                    Text.of("§aFinished rollback for " + finishedPlayer),
+                    false
             );
         } else {
-            sendNextCommand();
-        }
-    }
-
-    private void retryCurrentCommand() {
-        if (currentCommandIndex < pendingCommands.length) {
             sendNextCommand();
         }
     }
