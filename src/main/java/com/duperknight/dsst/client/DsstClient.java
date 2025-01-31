@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;
@@ -46,6 +47,9 @@ public class DsstClient implements ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register(this::registerRollbackXrayCommand);
         ClientReceiveMessageEvents.GAME.register(this::handleMessage);
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> resetState());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> resetState());
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> resetState());
+        Runtime.getRuntime().addShutdownHook(new Thread(this::resetState));
     }
 
     private void registerRollbackXrayCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess commandRegistryAccess) {
@@ -147,7 +151,6 @@ public class DsstClient implements ClientModInitializer {
         if (client.player == null || currentCommandIndex >= pendingCommands.length) return;
 
         String command = pendingCommands[currentCommandIndex];
-        System.out.println("DEBUG - Sending command #" + (currentCommandIndex + 1));
         client.player.networkHandler.sendCommand(command);
     }
 
