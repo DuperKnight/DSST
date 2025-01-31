@@ -26,6 +26,14 @@ public class DsstClient implements ClientModInitializer {
             "Unknown or incomplete command|Database busy",
             Pattern.CASE_INSENSITIVE
     );
+    private static final Pattern NO_PERM_PATTERN = Pattern.compile(
+            "You do not have permission to do that.",
+            Pattern.CASE_INSENSITIVE
+    );
+    private static final Pattern USER_NOT_FOUND_PATTERN = Pattern.compile(
+            "CoreProtect - User \".*\" not found.",
+            Pattern.CASE_INSENSITIVE
+    );
 
     private final AtomicBoolean isBusy = new AtomicBoolean(false);
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -59,18 +67,42 @@ public class DsstClient implements ClientModInitializer {
     private void handleMessage(Text message, boolean overlay) {
         String rawMessage = message.getString().replaceAll("§[0-9a-fk-or]", "");
 
-        if (COREPROTECT_DONE.matcher(rawMessage).matches()) {
+        if (COREPROTECT_DONE.matcher(rawMessage).matches() && isBusy.get()) {
             scheduler.schedule(() ->
                             MinecraftClient.getInstance().execute(this::proceedToNextCommand),
                     1, TimeUnit.SECONDS
             );
         }
-        else if (ERROR_PATTERN.matcher(rawMessage).find()) {
+        else if (ERROR_PATTERN.matcher(rawMessage).find() && isBusy.get()) {
             MinecraftClient.getInstance().execute(() -> {
-                MinecraftClient.getInstance().player.sendMessage(
-                        Text.of("§b[DSST] §cError occurred! Stopping rollback sequence."),
-                        false
-                );
+                if (MinecraftClient.getInstance().player != null) {
+                    MinecraftClient.getInstance().player.sendMessage(
+                            Text.of("§b[DSST] §cError occurred! Stopping rollback sequence."),
+                            false
+                    );
+                }
+                resetState();
+            });
+        }
+        else if (NO_PERM_PATTERN.matcher(rawMessage).find() && isBusy.get()) {
+            MinecraftClient.getInstance().execute(() -> {
+                if (MinecraftClient.getInstance().player != null) {
+                    MinecraftClient.getInstance().player.sendMessage(
+                            Text.of("§b[DSST] §cError occurred! Lack of permission, you random!"),
+                            false
+                    );
+                }
+                resetState();
+            });
+        }
+        else if (USER_NOT_FOUND_PATTERN.matcher(rawMessage).matches() && isBusy.get()) {
+            MinecraftClient.getInstance().execute(() -> {
+                if (MinecraftClient.getInstance().player != null) {
+                    MinecraftClient.getInstance().player.sendMessage(
+                            Text.of("§b[DSST] §cUser not found! Stopping rollback sequence."),
+                            false
+                    );
+                }
                 resetState();
             });
         }
@@ -99,10 +131,12 @@ public class DsstClient implements ClientModInitializer {
         if (currentCommandIndex >= pendingCommands.length) {
             String finishedPlayer = currentPlayer;
             resetState();
-            MinecraftClient.getInstance().player.sendMessage(
-                    Text.of("§b[DSST] §rFinished rollback for " + finishedPlayer),
-                    false
-            );
+            if (MinecraftClient.getInstance().player != null){
+                MinecraftClient.getInstance().player.sendMessage(
+                        Text.of("§b[DSST] §rFinished rollback for " + finishedPlayer),
+                        false
+                );
+            }
         } else {
             sendNextCommand();
         }
