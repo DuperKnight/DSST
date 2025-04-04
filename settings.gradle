@@ -1,9 +1,34 @@
 pluginManagement {
     repositories {
-        maven {
-            name = 'Fabric'
-            url = 'https://maven.fabricmc.net/'
-        }
+        maven { url = 'https://maven.fabricmc.net/' }
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://maven.parchmentmc.org' }
+        maven { url = 'https://maven.quiltmc.org/repository/release' }
         gradlePluginPortal()
+    }
+    plugins {
+        id 'fabric-loom' version '1.9-SNAPSHOT'
+        id "dev.kikugie.stonecutter" version "0.5.2"
+    }
+}
+
+stonecutter {
+    targetVersions {
+        create("1.20.6") {
+            fabricLoader = project.loader_version
+            minecraft = "1.20.6"
+            mappings = "net.fabricmc:yarn:1.20.6+build.10:v2"
+            fabricApi = "net.fabricmc.fabric-api:fabric-api:0.91.5+1.20.6"
+        }
+        create("1.21.4") {
+            fabricLoader = project.loader_version
+            minecraft = project.minecraft_version
+            mappings = "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+            fabricApi = "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+        }
+    }
+
+    common {
+        targetJavaVersion = 21
     }
 }

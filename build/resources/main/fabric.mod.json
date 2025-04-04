@@ -1,25 +1,25 @@
 {
   "schemaVersion": 1,
-  "id": "daxr",
-  "version": "0.1.0",
-  "name": "DAXR",
-  "description": "Duper's Auto Xray Rollback mod",
-  "authors": [],
+  "id": "dsst",
+  "version": "0.1.1+1.20-1.21.4",
+  "name": "Duper's Stoneworks Staff Tools",
+  "description": "Duper's Stoneworks Staff Tools mod",
+  "authors": ["DuperKnight"],
   "contact": {},
   "license": "MIT",
-  "icon": "assets/daxr/icon.png",
+  "icon": "assets/dsst/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
-      "com.duperknight.daxr.client.DaxrClient"
+      "com.duperknight.dsst.client.DsstClient"
     ],
     "main": [
-      "com.duperknight.daxr.Daxr"
+      "com.duperknight.dsst.Dsst"
     ]
   },
   "depends": {
     "fabricloader": ">=0.16.10",
     "fabric": "*",
-    "minecraft": "1.20"
+    "minecraft": ">=1.20"
   }
 }

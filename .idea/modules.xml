@@ -4,6 +4,9 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/DAXR.main.iml" filepath="$PROJECT_DIR$/.idea/modules/DAXR.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/DAXR.test.iml" filepath="$PROJECT_DIR$/.idea/modules/DAXR.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DSST.iml" filepath="$PROJECT_DIR$/.idea/modules/DSST.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DSST.main.iml" filepath="$PROJECT_DIR$/.idea/modules/DSST.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DSST.test.iml" filepath="$PROJECT_DIR$/.idea/modules/DSST.test.iml" />
     </modules>
   </component>
 </project>

@@ -1,2 +1,36 @@
 /rollbackxray
 /rollbackxray DuperKnight
+/gamemode creative
+/rollbackxray DuperKnight
+/gamemode creative
+/rollbackxray DuperKnight
+/co rollback u:DuperKnight t:7d r:#global action:container
+/rollbackxray DuperKnight
+/rl,
+/gamemode creative
+/rollbackxray Player717
+/gamemode creative
+/rollbackxray Player857
+/gamemode creative
+/rollbackxray Player815
+/gamemode creative
+/rollbackxray Player389
+/co restore user:Player389 time:1d action:-block include:stone
+/rollbackxray Player389
+/co restore user:Player389 time:1d action:-block include:stone
+/co rollback u:Player389 t:30d radius:#global a:-block include:deepslate,deepslate_gold_ore,deepslate_emerald_ore,deepslate_diamond_ore,deepslate_iron_ore,deepslate_lapis_ore,deepslate_redstone_ore,deepslate_copper_ore,tuff
+/rollbackxray Player389
+/co restore action:block user:Player389 time:1d
+/gamemode creative
+/co restore action:+container user:Player389 time:1d
+/rollbackxray Player389
+/gamemode creative
+/time set day
+/co restore u:Player389 a:+container time:1
+/co restore u:Player389 a:+container time:1d
+/co restore u:Player389 a:-block time:1d
+/rollbackxray Player389
+/rollbackxray Player640
+/gamemode C
+/gamemode creative
+/rollbackxray Player52
