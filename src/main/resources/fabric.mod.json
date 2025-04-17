@@ -5,7 +5,9 @@
   "name": "Duper's Stoneworks Staff Tools",
   "description": "Duper's Stoneworks Staff Tools mod",
   "authors": ["DuperKnight"],
-  "contact": {},
+  "contact": {
+    "discord": "@Dupernite"
+  },
   "license": "MIT",
   "icon": "assets/dsst/icon.png",
   "environment": "client",
