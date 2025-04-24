@@ -150,7 +150,7 @@ public class DsstClient implements ClientModInitializer {
     private void sendNextCommand(String[] commands, int index) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player != null && index < commands.length) {
-            client.player.sendMessage(Text.of(commands[index]), false);
+            client.player.networkHandler.sendCommand(commands[index]);
         }
     }
 
