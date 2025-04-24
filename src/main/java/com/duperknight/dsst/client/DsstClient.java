@@ -2,7 +2,6 @@ package com.duperknight.dsst.client;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -138,7 +137,9 @@ public class DsstClient implements ClientModInitializer {
             this.rollbackPendingCommands = new String[]{
                 "co rollback u:" + player + " t:7d r:#global action:container",
                 "co rollback u:" + player + " t:30d radius:#global a:-block include:deepslate,deepslate_gold_ore,deepslate_emerald_ore,deepslate_diamond_ore,deepslate_iron_ore,deepslate_lapis_ore,deepslate_redstone_ore,deepslate_copper_ore,tuff",
-                "co rollback u:" + player + " t:30d radius:#global a:-block include:stone,gold_ore,iron_ore,emerald_ore,diamond_ore,redstone_ore,lapis_ore,coal_ore,granite,diorite,andesite,gravel"};
+                "co rollback u:" + player + " t:30d radius:#global a:-block include:stone,gold_ore,iron_ore,emerald_ore,diamond_ore,redstone_ore,lapis_ore,coal_ore,granite,diorite,andesite,gravel",
+                "co rollback u:" + player + " t:30d radius:#global a:+block include:gold_ore,iron_ore,emerald_ore,diamond_ore,redstone_ore,lapis_ore,coal_ore",
+                "co rollback u:" + player + " t:30d radius:#global a:+block include:deepslate_gold_ore,deepslate_emerald_ore,deepslate_diamond_ore,deepslate_iron_ore,deepslate_lapis_ore,deepslate_redstone_ore,deepslate_copper_ore"};
             this.rollbackCommandIndex = 0;
             this.rollbackPlayer = player;
             this.isRollbackBusy.set(true);
@@ -149,7 +150,7 @@ public class DsstClient implements ClientModInitializer {
     private void sendNextCommand(String[] commands, int index) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player != null && index < commands.length) {
-            client.player.sendMessage(Text.of(commands[index]), false);
+            client.player.networkHandler.sendCommand(commands[index]);
         }
     }
 
