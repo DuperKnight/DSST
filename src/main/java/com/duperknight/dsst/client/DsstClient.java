@@ -41,6 +41,7 @@ public class DsstClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientCommandRegistrationCallback.EVENT.register(this::registerRollbackXrayCommand);
         ClientCommandRegistrationCallback.EVENT.register(this::registerPrefixCreateCommand);
+        ClientCommandRegistrationCallback.EVENT.register(this::registerPurgeCommand);
         ClientReceiveMessageEvents.GAME.register(this::handleMessage);
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             this.resetPrefixState();
@@ -120,7 +121,7 @@ public class DsstClient implements ClientModInitializer {
                 }
             }
             this.prefixPendingCommands = new String[]{
-                "prefix create " + prefixID + " " + prefix,
+                "prefix x create " + prefixID + " " + prefix,
                 "prefix x setlimit " + prefixID + " " + limitValue,
                 "prefix x setmanager " + prefixID + " " + ign,
                 "prefix x info " + prefixID};
@@ -201,11 +202,46 @@ public class DsstClient implements ClientModInitializer {
         this.isRollbackBusy.set(false);
     }
 
+    private void registerPurgeCommand(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess commandRegistryAccess) {
+        dispatcher.register(ClientCommandManager.literal("purge")
+                .then(ClientCommandManager.literal("on")
+                        .executes(context -> {
+                            purgeOn();
+                            return 1;
+                        })
+                )
+                .then(ClientCommandManager.literal("off")
+                        .executes(context -> {
+                            purgeOff();
+                            return 1;
+                        })
+                )
+        );
+    }
+    
+    private void purgeOn() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player != null) {
+            client.player.networkHandler.sendCommand("gamerule keepInventory false");
+
+            client.player.sendMessage(Text.literal("§b[DSST] §aPurge mode has been activated!"), false);
+        }
+    }
+    
+    private void purgeOff() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player != null) {
+            client.player.networkHandler.sendCommand("gamerule keepInventory true");
+
+            client.player.sendMessage(Text.literal("§b[DSST] §aPurge mode has been deactivated!"), false);
+        }
+    }
+    
     private void handleMessage(Text message, boolean overlay) {
         String rawMessage = message.getString().replaceAll("§[0-9a-fk-or]", "");
         if (this.isPrefixBusy.get()) {
             String currentPrefixCmd = this.prefixPendingCommands[this.prefixCommandIndex];
-            if (currentPrefixCmd.startsWith("prefix create") && PREFIX_CREATE_PATTERN.matcher(rawMessage).matches()) {
+            if (currentPrefixCmd.startsWith("prefix x create") && PREFIX_CREATE_PATTERN.matcher(rawMessage).matches()) {
                 this.scheduleProceed(true);
                 return;
             }
