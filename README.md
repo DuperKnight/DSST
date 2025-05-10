@@ -1,0 +1,68 @@
+# DSST - Duper's Stoneworks Staff Tools
+My plan is to one day merge all the other mods into a single one. This one.
+
+## Commands
+
+The following commands are available:
+
+### 1. Rollback X-ray
+
+This command is designed to help rollback X-ray related actions for a player. It executes a sequence of CoreProtect rollback commands.
+
+**Syntax:**
+`/rollbackxray <player>`
+
+**Arguments:**
+*   `<player>`: The in-game name of the player to investigate.
+
+**Functionality:**
+When executed, this command will:
+1.  Rollback container transactions for the player within the last 7 days.
+2.  Rollback deepslate ores and tuff block breaks for the player within the last 30 days.
+3.  Rollback stone and ore blocks breaks (excluding deepslate variants) for the player within the last 30 days.
+4.  Rollback ore blocks placements for the player within the last 30 days.
+5.  Rollback deepslate ore blocks placements for the player within the last 30 days.
+
+The mod will notify you when the rollback sequence for the player is complete or if an error occurs. Only one rollback operation can be active at a time, Sorry!
+
+### 2. Prefix Create
+
+This command facilitates the creation and configuration of player prefixes. It automates the process of creating a prefix, setting its limit, assigning a manager, and displaying its information when it finishes creating it.
+
+**Syntax:**
+`/prefixc <type> <ign> <prefixID> <prefix>`
+
+**Arguments:**
+*   `<type>`: The type of prefix, which determines its usage limit.
+    *   `Normal`: Sets a limit of 10.
+    *   `Mass`: Sets a limit of 30.
+    *   `Unlimited`: Sets a very very high limit (effectively unlimited, 2,147,483,647 for my nerd friends).
+    *   `<Custom Value>`: A specific number to set as the limit.
+*   `<ign>`: The in-game name of the player who will be set as the manager of this prefix.
+*   `<prefixID>`: A unique identifier for the new prefix.
+*   `<prefix>`: The actual prefix string.
+
+**Functionality:**
+This command executes the following server commands in sequence:
+1.  `prefix x create <prefixID> <prefix>`
+2.  `prefix x setlimit <prefixID> <limitValue>` (limitValue is determined by `<type>`)
+3.  `prefix x setmanager <prefixID> <ign>`
+4.  `prefix x info <prefixID>`
+
+The mod will notify you upon completion or if any error occurs during the process. Only one prefix creation operation can be active at a time, sorry again!
+
+### 3. Purge Mode
+
+This command is only supposed to be ran by Sr War staff, so don't run it!, it allows toggling a "purge mode" on the server by changing the `keepInventory` gamerule, before it was more useful when there was the npc bossbar, now its just a easier way to write the gamerule.
+
+**Syntax:**
+*   `/purge on`
+*   `/purge off`
+
+**Functionality:**
+*   `/purge on`: Executes the server command `gamerule keepInventory false`. This means players will drop their inventory upon death, very scary.
+*   `/purge off`: Executes the server command `gamerule keepInventory true`. This means players will keep their inventory upon death, not scary.
+
+---
+
+**Note:** This mod sends commands to the server. Ensure you have the necessary permissions on the server to execute the underlying commands (e.g., CoreProtect commands, prefix management commands, gamerule changes).
